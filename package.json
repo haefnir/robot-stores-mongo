@@ -1,0 +1,23 @@
+{
+  "name": "robot-stores-mongo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/haefnir/robot-stores-mongo.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/haefnir/robot-stores-mongo/issues"
+  },
+  "homepage": "https://github.com/haefnir/robot-stores-mongo#readme",
+  "dependencies": {
+    "express": "^4.18.1",
+    "mongodb": "^4.7.0"
+  }
+}
