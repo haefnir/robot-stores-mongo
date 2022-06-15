@@ -11,7 +11,7 @@ const url = "mongodb://root:password@localhost:27017"
 const getDb = async () => {
     let connection = {}
     connection = await MongoClient.connect(url, {ignoreUndefined: true})
-    return connection.db('robot-store').collection('products')
+    return connection.db('robot-store')
 }
 
 const dbMiddleware = async (req, res, next) => {
@@ -103,7 +103,7 @@ app.get('/api/products', async (req, res) => {
 
     let final_condition = (conditions.length > 0) ? {$and: conditions} : {};
 
-    const products = await res.locals.connection.find(final_condition).project({_id: true, title: true, price: true, image: true}).toArray()
+    const products = await res.locals.connection.collection('products').find(final_condition).project({_id: true, title: true, price: true, image: true}).toArray()
 
     res.status(200).json({
         status: 200,
@@ -113,8 +113,17 @@ app.get('/api/products', async (req, res) => {
 })
 
 app.get('/api/products/:id', async (req, res) => {
-    const _id = ObjectId(req.params.id)
-    const product = await res.locals.connection.find({_id}).toArray()
+    let _id
+    try {
+        _id = ObjectId(req.params.userId)
+    } catch(err) {
+        res.status(400).json({
+            "status": 400,
+            "message": "Invalid ID",
+            "data": null
+        })}
+
+    const product = await res.locals.connection.collection('products').find({_id}).toArray()
 
     if(product.id) {
         res.status(200).json({
@@ -146,7 +155,7 @@ app.post('/api/products', dataMiddleware, async (req, res) => {
         })
     }
 
-    const result = await res.locals.connection.insertOne(res.locals.data)
+    const result = await res.locals.connection.collection('products').insertOne(res.locals.data)
 
     if(result.insertedId) {
         res.status(200).json({
@@ -180,7 +189,7 @@ app.put('/api/products/:id', dataMiddleware, async (req, res) => {
         })
     }
 
-    const result = await res.locals.connection.updateOne({_id}, {$set: res.locals.data})
+    const result = await res.locals.connection.collection('products').updateOne({_id}, {$set: res.locals.data})
 
     if(result.modifiedCount === 0) {
         res.status(400).json({
@@ -200,7 +209,7 @@ app.put('/api/products/:id', dataMiddleware, async (req, res) => {
 app.delete('/api/products/:id', async (req, res) => {
     const _id = ObjectId(req.params.id)
 
-    const result = await res.locals.connection.deleteOne({_id})
+    const result = await res.locals.connection.collection('products').deleteOne({_id})
 
     if(result.deletedCount === 0) {
         res.status(400).json({
@@ -212,6 +221,72 @@ app.delete('/api/products/:id', async (req, res) => {
         res.status(200).json({
             status: 200,
             message: 'Deleted successfully',
+            data: null
+        })
+    }
+})
+
+app.get('/api/categories', async (req, res) => {
+    const categories = await res.locals.connection.collection('categories').find({}).project({name: true}).toArray()
+
+    res.status(200).json({
+        status: 200,
+        message: 'Data retrieved successfully',
+        data: categories
+    })
+})
+
+app.get('/api/characters', async (req, res) => {
+    const characters = await res.locals.connection.collection('characters').find({}).project({name: true}).toArray()
+
+    res.status(200).json({
+        status: 200,
+        message: 'Data retrieved successfully',
+        data: characters
+    })
+})
+
+app.get('/api/basket/:userId', async (req, res) => {
+    let userId
+    try {
+        userId = ObjectId(req.params.userId)
+    } catch(err) {
+        res.status(400).json({
+            "status": 400,
+            "message": "Invalid ID",
+            "data": null
+    })}
+
+    const basket = await res.locals.connection.collection('baskets').findOne({userId}).toArray()
+
+    if(basket.id) {
+        res.status(200).json({
+            "status": 200,
+            "message": "Basket retrieved successfully!",
+            "data": basket
+        })
+    } else {
+        res.status(400).json({
+            "status": 400,
+            "message": "Invalid ID",
+            "data": null
+        })
+    }
+})
+
+app.put('/api/clearWaste', async (req, res) => {
+    const result = await res.locals.connection.collection('products').updateMany({}, {$unset: {category_id: "", character_id: ""}})
+
+    if(result.modifiedCount === 0) {
+        res.status(400).json({
+            status: 400,
+            message: 'Update failed',
+            data: null
+        })
+    } else {
+        res.status(200).json({
+            status: 200,
+            message: 'Updated successfully',
             data: null
         })
     }
